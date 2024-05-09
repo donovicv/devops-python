@@ -25,7 +25,3 @@ def get_user(pokedex_number: int):
 def get_user(pokedex_number: int, name: str):
     repo = PokemonRepository()
     return repo.get_pokemon_by_pokedex_number_and_name(pokedex_number, name)
-
-
-if __name__ == '__main__':
-    PokemonRepository().get_all_pokemon()
