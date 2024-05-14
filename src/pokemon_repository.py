@@ -10,6 +10,7 @@ class PokemonRepository(object):
     def __init__(self):
         # self.connection = sqlite3.connect(r'C:\dev\code\python\PokemonSaveToSQLite\pokemon.db')
         config_file = config_reader.read_config()
+        print("ASDFGH" + str(config_file["db_port"]))
         self.connection = mariadb.connect(
             host=config_file["db_host"],
             port=config_file["db_port"],
@@ -27,7 +28,7 @@ class PokemonRepository(object):
         all_pokemon = []
         for pokemon in results:
             all_pokemon.append(
-                Pokemon(pokemon[0], pokemon[1], pokemon[2], pokemon[3], pokemon[4], pokemon[5], pokemon[6], pokemon[7],
+                Pokemon(int(pokemon[0]), pokemon[1], pokemon[2], pokemon[3], pokemon[4], pokemon[5], pokemon[6], pokemon[7],
                         pokemon[8], pokemon[9], pokemon[10], pokemon[11], pokemon[12]))
 
         return all_pokemon
