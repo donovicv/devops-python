@@ -1,6 +1,4 @@
-import uvicorn
-
-from pokemon_repository import PokemonRepository
+from .pokemon.pokemon_repository import PokemonRepository
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
     return {"hello": "world again"}
@@ -25,6 +24,7 @@ def root():
 def get_all_pokemon():
     repo = PokemonRepository()
     return repo.get_all_pokemon()
+
 
 @app.get("/pokemon/{pokedex_number}")
 def get_pokemon_by_pokedex_number(pokedex_number: int):
@@ -36,7 +36,3 @@ def get_pokemon_by_pokedex_number(pokedex_number: int):
 def get_pokemon_by_pokedex_number_and_name(pokedex_number: int, name: str):
     repo = PokemonRepository()
     return repo.get_pokemon_by_pokedex_number_and_name(pokedex_number, name)
-
-# For debug purposes
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)

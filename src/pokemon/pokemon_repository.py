@@ -1,19 +1,15 @@
-# import mariadb
-
 import mariadb
 
-from pokemon import Pokemon
-import config_reader
+from .pokemon import Pokemon
+from src.config_reader import read_config
 
 
 class PokemonRepository(object):
     def __init__(self):
-        # self.connection = sqlite3.connect(r'C:\dev\code\python\PokemonSaveToSQLite\pokemon.db')
-        config_file = config_reader.read_config()
-        print("ASDFGH" + str(config_file["db_port"]))
+        config_file = read_config()
         self.connection = mariadb.connect(
-            host=config_file["db_host"],
             port=config_file["db_port"],
+            host=config_file["db_host"],
             user=config_file["db_user"],
             password=config_file["db_password"],
             database=config_file["db_name"]
