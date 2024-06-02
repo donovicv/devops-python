@@ -15,7 +15,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        PYTHONPATH=. pytest
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install --prefer-binary --no-cache-dir --upgrade -r requirements.txt; fi
@@ -29,6 +28,7 @@ jobs:
 
     - name: Test with pytest
       run: |
+        PYTHONPATH=. pytest
         pytest ./src/tests/test_main.py
 
     - name: Set up Docker Buildx
