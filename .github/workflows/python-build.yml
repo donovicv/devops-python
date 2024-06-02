@@ -15,6 +15,10 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get -y install libmariadb3 libmariadb-dev
+        sudo apt-get -y install gcc
+        
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install --prefer-binary --no-cache-dir --upgrade -r requirements.txt; fi
