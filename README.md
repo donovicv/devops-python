@@ -25,3 +25,11 @@ The backend is designed to handle read operations for Pokemon information. It ut
 
 ```bash
 git clone https://github.com/donovicv/devops_python.git
+```
+
+## Running
+1. Run the application:
+
+```bash
+uvicorn src.main:app --host=0.0.0.0 --port=80
+```
