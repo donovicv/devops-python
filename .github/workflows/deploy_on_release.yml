@@ -1,0 +1,70 @@
+name: Deploy to Azure VM
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install SSH client
+        run: sudo apt-get install -y openssh-client
+
+      - name: Install Azure CLI
+        run: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Login to Azure
+        run: az login --service-principal --username ${{ secrets.AZURE_USERNAME }} --password ${{ secrets.AZURE_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT }}
+
+      - name: Generate SSH keys
+        run: |
+          ssh-keygen -t rsa -b 2048 -f my_azure_key -q -N ""
+          echo "SSH_PRIVATE_KEY=$(cat my_azure_key)" >> $GITHUB_ENV
+          echo "SSH_PUBLIC_KEY=$(cat my_azure_key.pub)" >> $GITHUB_ENV
+
+      - name: Check if VM exists
+        id: check_vm
+        run: |
+          RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
+          VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
+          if az vm show --resource-group $RESOURCE_GROUP --name $VM_NAME &>/dev/null; then
+            echo "VM_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "VM_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create VM if it does not exist
+        if: env.VM_EXISTS == 'false'
+        run: |
+          RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
+          VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $DOCKERHUB_USERNAME --ssh-key-value $SSH_PUBLIC_KEY --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
+
+      - name: Get VM public IP address
+        run: |
+          RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
+          VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
+          IP_NAME=$(az vm show --resource-group $RESOURCE_GROUP --name $VM_NAME --query publicIpAddress -o tsv)
+          echo "AZURE_PUBLIC_IP=$IP_NAME" >> $GITHUB_ENV
+
+      - name: Deploy to Azure VM
+        env:
+          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          SSH_PRIVATE_KEY: ${{ env.SSH_PRIVATE_KEY }}
+          PUBLIC_IP: ${{ env.PUBLIC_IP }}
+        run: |
+          chmod 700 $SSH_PRIVATE_KEY
+          ssh -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY $AZURE_VM_USERNAME@$PUBLIC_IP << 'EOF'
+            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_ACCESS_TOKEN
+            docker tag donovicv/pokepy-backend:latest ${{ github.event.release.tag_name }}
+            docker pull donovicv/pokepy-backend:latest
+            docker stop pokepy-backend || true
+            docker rm pokepy-backend || true
+            docker run -d --name pokepy-backend -p 80:80 donovicv/pokepy-backend:latest
+          EOF
+        continue-on-error: true
