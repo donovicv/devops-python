@@ -26,7 +26,7 @@ jobs:
           # Read the contents of the file and append it to the $GITHUB_ENV
           # The following three lines avoid a multiline error 
           echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
-          cat ~/.ssh/id_rsa >> $GITHUB_ENV
+          cat ./my_azure_key >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           echo "SSH_PUBLIC_KEY=$(cat my_azure_key.pub)" >> $GITHUB_ENV
