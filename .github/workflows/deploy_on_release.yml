@@ -28,6 +28,7 @@ jobs:
           echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
           cat ./my_azure_key >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          chmod 700 ./my_azure_key
 
       - name: Check if VM exists
         id: check_vm
@@ -47,7 +48,7 @@ jobs:
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $DOCKERHUB_USERNAME --ssh-key-value ./my_azure_key.pub --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
-
+          
       - name: Get VM public IP address
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
@@ -56,16 +57,9 @@ jobs:
           echo "AZURE_PUBLIC_IP=$IP_NAME" >> $GITHUB_ENV
 
       - name: Deploy to Azure VM
-        env:
-          AZURE_VM_USERNAME: ${{ secrets.AZURE_VM_USERNAME }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-          SSH_PRIVATE_KEY: ${{ env.SSH_PRIVATE_KEY }}
-          PUBLIC_IP: ${{ env.PUBLIC_IP }}
         run: |
-          chmod 700 $SSH_PRIVATE_KEY
-          ssh -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY $AZURE_VM_USERNAME@$PUBLIC_IP << 'EOF'
-            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_ACCESS_TOKEN
+          ssh -o StrictHostKeyChecking=accept-new -i ./my_azure_key ${{ secrets.AZURE_VM_USERNAME }}@${{ env.AZURE_PUBLIC_IP }} << 'EOF'
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
             docker tag donovicv/pokepy-backend:latest ${{ github.event.release.tag_name }}
             docker pull donovicv/pokepy-backend:latest
             docker stop pokepy-backend || true
