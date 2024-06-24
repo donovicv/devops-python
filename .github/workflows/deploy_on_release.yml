@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy to Azure VM
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -i ./my_azure_key ${{ secrets.AZURE_VM_USERNAME }}@${{ env.AZURE_PUBLIC_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=accept-new -i ./my_azure_key ${{ secrets.AZURE_VM_USERNAME }}@${{ env.AZURE_PUBLIC_IP }} << EOF
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
             docker tag donovicv/pokepy-backend:latest ${{ github.event.release.tag_name }}
             docker pull donovicv/pokepy-backend:latest
