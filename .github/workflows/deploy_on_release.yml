@@ -30,17 +30,30 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
           chmod 700 ./my_azure_key
 
+# if exists get ip-address 
       - name: Check if VM exists
         id: check_vm
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
           if az vm show --resource-group $RESOURCE_GROUP --name $VM_NAME &>/dev/null; then
-            echo "VM_EXISTS=true" >> $GITHUB_ENV
+            echo "VM_EXISTS=true" >> $GITHUB_ENV            
           else
             echo "VM_EXISTS=false" >> $GITHUB_ENV
+     
+            NIC_ID=$(az vm nic list --resource-group $RESOURCE_GROUP --vm-name $VM_NAME --query "[0].id" -o tsv)
+
+            # Get the Public IP Address ID
+            PUBLIC_IP_ID=$(az network nic show --ids $NIC_ID --query "ipConfigurations[0].publicIpAddress.id" -o tsv)
+
+            # Get the Public IP Address
+            PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" -o tsv)
+
+            echo "AZURE_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
           fi
 
+# set ip-address
       - name: Create VM if it does not exist
         if: env.VM_EXISTS == 'false'
         run: |
@@ -49,6 +62,16 @@ jobs:
           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $DOCKERHUB_USERNAME --ssh-key-value ./my_azure_key.pub --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
           
+          NIC_ID=$(az vm nic list --resource-group $RESOURCE_GROUP --vm-name $VM_NAME --query "[0].id" -o tsv)
+
+          # Get the Public IP Address ID
+          PUBLIC_IP_ID=$(az network nic show --ids $NIC_ID --query "ipConfigurations[0].publicIpAddress.id" -o tsv)
+
+          # Get the Public IP Address
+          PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" -o tsv)
+
+          echo "AZURE_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
       - name: Get VM public IP address
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
@@ -58,7 +81,7 @@ jobs:
 
       - name: Deploy to Azure VM
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -i ./my_azure_key ${{ secrets.AZURE_VM_USERNAME }}@${{ env.AZURE_PUBLIC_IP }} << EOF
+          ssh -o StrictHostKeyChecking=accept-new -i ./my_azure_key ${{ secrets.AZURE_USERNAME }}@${{ env.AZURE_PUBLIC_IP }} << EOF
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
             docker tag donovicv/pokepy-backend:latest ${{ github.event.release.tag_name }}
             docker pull donovicv/pokepy-backend:latest
