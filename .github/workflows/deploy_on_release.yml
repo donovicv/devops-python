@@ -37,6 +37,8 @@ jobs:
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
           if az vm show --resource-group $RESOURCE_GROUP --name $VM_NAME &>/dev/null; then
             echo "VM_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "VM_EXISTS=false" >> $GITHUB_ENV
           fi
 
       - name: Create VM if it does not exist
@@ -58,6 +60,7 @@ jobs:
           echo "AZURE_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Get VM public IP address
+        if: env.VM_EXISTS == 'true'
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
