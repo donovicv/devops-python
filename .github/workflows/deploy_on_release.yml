@@ -30,30 +30,15 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
           chmod 700 ./my_azure_key
 
-# if exists get ip-address 
       - name: Check if VM exists
         id: check_vm
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
           if az vm show --resource-group $RESOURCE_GROUP --name $VM_NAME &>/dev/null; then
-            echo "VM_EXISTS=true" >> $GITHUB_ENV            
-          else
-            echo "VM_EXISTS=false" >> $GITHUB_ENV
-     
-            NIC_ID=$(az vm nic list --resource-group $RESOURCE_GROUP --vm-name $VM_NAME --query "[0].id" -o tsv)
-
-            # Get the Public IP Address ID
-            PUBLIC_IP_ID=$(az network nic show --ids $NIC_ID --query "ipConfigurations[0].publicIpAddress.id" -o tsv)
-
-            # Get the Public IP Address
-            PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" -o tsv)
-
-            echo "AZURE_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-
+            echo "VM_EXISTS=true" >> $GITHUB_ENV
           fi
 
-# set ip-address
       - name: Create VM if it does not exist
         if: env.VM_EXISTS == 'false'
         run: |
