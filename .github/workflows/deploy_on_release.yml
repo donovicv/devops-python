@@ -46,8 +46,8 @@ jobs:
         run: |
           RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}
           VM_NAME=${{ vars.PREFIX_NAME_VM }}Backend
-          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-          az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $DOCKERHUB_USERNAME --ssh-key-value ./my_azure_key.pub --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
+          AZURE_USERNAME=${{ secrets.AZURE_USERNAME }}
+          az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $AZURE_USERNAME --ssh-key-value ./my_azure_key.pub --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
           echo "VM_EXISTS=true" >> $GITHUB_ENV
 
       - name: Get VM public IP address
