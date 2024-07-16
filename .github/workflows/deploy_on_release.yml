@@ -68,7 +68,7 @@ jobs:
             --name Allow-HTTP-22 \
             --protocol Tcp \
             --direction Inbound \
-            --priority 1001 \
+            --priority 1002 \
             --source-address-prefixes '*' \
             --source-port-ranges '*' \
             --destination-address-prefixes '*' \
