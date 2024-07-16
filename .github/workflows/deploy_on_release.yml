@@ -28,7 +28,8 @@ jobs:
           echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
           cat ./my_azure_key >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          chmod 700 ./my_azure_key
+          chmod 600 ./my_azure_key
+          ls -a
 
       - name: Check if VM exists
         id: check_vm
@@ -49,7 +50,6 @@ jobs:
           NSG_NAME=${{ vars.PREFIX_NAME_VM }}BackendNSG
           AZURE_USERNAME=${{ secrets.AZURE_USERNAME }}
           az vm create --resource-group $RESOURCE_GROUP --name $VM_NAME --image "Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest" --admin-username $AZURE_USERNAME --ssh-key-value ./my_azure_key.pub --assign-identity --public-ip-sku Standard --location westeurope --size Standard_B1s --nic-delete-option delete --os-disk-delete-option delete --storage-sku Standard_LRS
-          az vm open-port --resource-group $RESOURCE_GROUP --name $VM_NAME --port 22 
           az network nsg rule create \
             --resource-group $RESOURCE_GROUP \
             --nsg-name $NSG_NAME \
